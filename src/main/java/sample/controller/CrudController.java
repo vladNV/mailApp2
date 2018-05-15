@@ -44,9 +44,7 @@ public class CrudController {
     @FXML private MenuItem bank;
     @FXML private MenuItem about;
     @FXML private MenuItem changing;
-    @FXML private MenuItem sent;
     @FXML private MenuItem write;
-    @FXML private MenuItem incoming;
     @FXML private MenuItem logout;
 
     @Autowired private OrganizationRepository repositoryOrg;
@@ -75,8 +73,6 @@ public class CrudController {
         signature.setOnAction(event -> setTable(signatureRepository));
         bank.setOnAction(event -> setTable(bankRepository));
 
-        incoming.setOnAction(event -> {});
-        sent.setOnAction(event -> {});
         write.setOnAction(event -> JavaFxController.changing(writing.getView()));
 
         changing.setOnAction(event -> changeEmail());

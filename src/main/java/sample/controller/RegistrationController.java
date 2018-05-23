@@ -25,6 +25,10 @@ public class RegistrationController {
     @FXML private Label errorPassword;
     @FXML private Label errorRePassword;
 
+    private static final String EMAIL_PATTERN =
+            "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+                    + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
+
     @Autowired private ClientRepository clientRepository;
     @Autowired
     @Qualifier("login")
@@ -63,7 +67,11 @@ public class RegistrationController {
         }
 
         if (email.getText() != null && !email.getText().isEmpty()) {
-            client.setEmail(email.getText());
+            try {
+                client.setEmail(CrudController.validEmail(email.getText()));
+            } catch (IllegalArgumentException e) {
+                client.setEmail(null);
+            }
         } else {
             errorEmail.setText("Неправильный email!");
         }
@@ -75,7 +83,6 @@ public class RegistrationController {
             } else {
                 errorRePassword.setText("Пароли не совпадают");
             }
-
         } else {
             errorPassword.setText("Неправильный пароль!");
         }

@@ -25,7 +25,6 @@ public class CrudController {
     private static final double INPUT_HEIGHT = 30;
     private static final double SIZE_BETWEEN_LABEL_AND_INPUT = 20;
     private static final double X_LAYOUT = 100;
-    private static final double Y_LAYOUT = 30;
     private static final double DY_LAYOUT = 70;
 
     private static final String ORGANIZATION = "Организация";
@@ -64,7 +63,9 @@ public class CrudController {
     private Map<String, TextField> fields = new HashMap<>();
     private Map<String, ComboBox> comboBoxMap = new HashMap<>();
     private String selectedEntity;
-
+    private static final String EMAIL_PATTERN =
+            "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+                    + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
 
     @FXML
     public void initialize() {
@@ -121,7 +122,11 @@ public class CrudController {
 
     private void updateEmailInDatabase(String newEmail, ClientDetails clientDetails) {
         Client client = clientDetails.buildClient();
-        client.setEmail(newEmail);
+        try {
+            client.setEmail(validEmail(newEmail));
+        } catch (IllegalArgumentException e) {
+            return;
+        }
         clientRepository.save(client);
         clientDetails.setEmail(newEmail);
         JavaFxController.alert("Изменение почты",
@@ -156,7 +161,6 @@ public class CrudController {
                 map.put("KPP", "КПП");
                 map.put("owner", "Владелец");
                 map.put("phone", "Телефон");
-//                map.put("bankName", "Введите имя банка");
                 createInputs(map, "Добавить организацию", runnable);
                 createCombobox("bankName", FXCollections.observableArrayList(
                         bankRepository
@@ -203,7 +207,11 @@ public class CrudController {
         Class<?> selectedModelClass = obj.getClass();
         if (selectedModelClass == Organization.class) {
             Organization org = (Organization) obj;
-            fillOrganization(org);
+            try {
+                fillOrganization(org);
+            } catch (IllegalArgumentException e) {
+                return;
+            }
             repositoryOrg.save(org);
         } else if (selectedModelClass == Bank.class) {
             Bank bank = (Bank) obj;
@@ -220,6 +228,7 @@ public class CrudController {
         } else {
             throw new RuntimeException("unknown entity");
         }
+        data.refresh();
         JavaFxController.alert("Редактирование",
                 "Данные отредактированы",
                 "Данные успешно отредактированы!");
@@ -229,29 +238,34 @@ public class CrudController {
         ClientDetails clientDetails = (ClientDetails) Main.scenes.get("client");
         switch (selectedEntity) {
             case ORGANIZATION:
-                addOrganizationToBase(clientDetails);
+                try {
+                    data.getItems().add(addOrganizationToBase(clientDetails));
+                } catch (IllegalArgumentException e) {
+                    return;
+                }
                 break;
             case BANK:
-                addBankToBase(clientDetails);
+                data.getItems().add(addBankToBase(clientDetails));
                 break;
             case COURSE:
-                addCourseToBase(clientDetails);
+                data.getItems().add(addCourseToBase(clientDetails));
                 break;
             case SIGNATURE:
-                addSignatureToBase(clientDetails);
+                data.getItems().add(addSignatureToBase(clientDetails));
                 break;
             default:
                 break;
         }
+        data.refresh();
         JavaFxController.alert("Добавление " + selectedEntity,selectedEntity + " была успешно добавлена",
                 "Данные добавлены и сохранены!");
     }
 
-    private void addBankToBase(ClientDetails clientDetails) {
+    private Bank addBankToBase(ClientDetails clientDetails) {
         Bank bank = new Bank();
         fillBank(bank);
         bank.setClient(clientDetails.buildClient());
-        bankRepository.save(bank);
+        return bankRepository.save(bank);
     }
 
     private void fillBank(Bank bank) {
@@ -260,29 +274,30 @@ public class CrudController {
         bank.setAccount(fields.get("account").getText());
     }
 
-    private void addOrganizationToBase(ClientDetails clientDetails) {
+    private Organization addOrganizationToBase(ClientDetails clientDetails) {
         Organization org = new Organization();
         fillOrganization(org);
         org.setBank(bankRepository.findByName((String) comboBoxMap.get("bankName").getSelectionModel().getSelectedItem()));
         org.setClient(clientDetails.buildClient());
-        repositoryOrg.save(org);
+        return repositoryOrg.save(org);
     }
 
     private void fillOrganization(Organization org) {
         org.setAddress(fields.get("address").getText());
         org.setChecking(fields.get("checking").getText());
-        org.setEmail(fields.get("email").getText());
+        String email = fields.get("email").getText();
+        org.setEmail(validEmail(email));
         org.setKPP(fields.get("KPP").getText());
         org.setName(fields.get("name").getText());
         org.setOwner(fields.get("owner").getText());
         org.setPhone(Long.valueOf(fields.get("phone").getText()));
     }
 
-    private void addSignatureToBase(ClientDetails clientDetails) {
+    private Signature addSignatureToBase(ClientDetails clientDetails) {
         Signature signature = new Signature();
         fillSignature(signature);
         signature.setClient(clientDetails.buildClient());
-        signatureRepository.save(signature);
+        return signatureRepository.save(signature);
     }
 
     private void fillSignature(Signature signature) {
@@ -290,11 +305,21 @@ public class CrudController {
         signature.setFullName(fields.get("fullName").getText());
     }
 
-    private void addCourseToBase(ClientDetails clientDetails) {
+    private Course addCourseToBase(ClientDetails clientDetails) {
         Course course = new Course();
         fillCourse(course);
         course.setClient(clientDetails.buildClient());
-        courseRepository.save(course);
+        return courseRepository.save(course);
+    }
+
+    public static String validEmail(String email) {
+        if (!email.matches(EMAIL_PATTERN)) {
+            JavaFxController.alert("Неверные данные",
+                    "Почта введена неправильно",
+                    "Пожалуйста, введите почту в правильном формате, для примера user@gmail.com");
+            throw new IllegalArgumentException();
+        }
+        return email;
     }
 
     private void fillCourse(Course course) {

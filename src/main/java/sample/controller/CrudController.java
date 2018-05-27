@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.repository.JpaRepository;
 import sample.Main;
+import sample.controller.exception.CannotDeleteException;
 import sample.domain.*;
 import sample.repository.*;
 import sample.session.ClientDetails;
@@ -37,6 +38,7 @@ public class CrudController {
     @FXML private AnchorPane dataPane;
     @FXML private Button commit;
     @FXML private Button add;
+    @FXML private Button remove;
     @FXML private MenuItem organization;
     @FXML private MenuItem course;
     @FXML private MenuItem signature;
@@ -91,6 +93,18 @@ public class CrudController {
                 addToTable();
             }
             commit.setVisible(false);
+        });
+
+        remove.setOnAction(e -> {
+            try {
+                Object o = data.getSelectionModel().getSelectedItem();
+                delete(o);
+                data.getItems().remove(o);
+                data.refresh();
+            } catch (CannotDeleteException e1) {
+                JavaFxController.alert("Удаление","Не возможно удалить " + e1.getMessage(),
+                        e1.getMessage() + " используется в качестве параметра в другом объекте!");
+            }
         });
 
         data.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
@@ -162,13 +176,23 @@ public class CrudController {
                 map.put("owner", "Владелец");
                 map.put("phone", "Телефон");
                 createInputs(map, "Добавить организацию", runnable);
-                createCombobox("bankName", FXCollections.observableArrayList(
+                createCombobox("Введите имя банка",
+                        "bankName", FXCollections.observableArrayList(
                         bankRepository
                                 .findAll()
                                 .stream()
                                 .filter(Objects::nonNull)
                                 .map(Bank::getName)
-                                .collect(Collectors.toList())));
+                                .collect(Collectors.toList())), 520);
+                createCombobox("Выберите учебный курс","courseName",
+                        FXCollections.observableArrayList(
+                                courseRepository
+                                .findAll()
+                                .stream()
+                                .filter(Objects::nonNull)
+                                .map(Course::getName)
+                                .collect(Collectors.toList())
+                        ), 580);
 
                 break;
             case BANK:
@@ -278,6 +302,7 @@ public class CrudController {
         Organization org = new Organization();
         fillOrganization(org);
         org.setBank(bankRepository.findByName((String) comboBoxMap.get("bankName").getSelectionModel().getSelectedItem()));
+        org.setCourse(courseRepository.findByName((String) comboBoxMap.get("courseName").getSelectionModel().getSelectedItem()));
         org.setClient(clientDetails.buildClient());
         return repositoryOrg.save(org);
     }
@@ -316,7 +341,8 @@ public class CrudController {
         if (!email.matches(EMAIL_PATTERN)) {
             JavaFxController.alert("Неверные данные",
                     "Почта введена неправильно",
-                    "Пожалуйста, введите почту в правильном формате, для примера user@gmail.com");
+                    "Пожалуйста, введите почту в правильном формате," +
+                            " для примера user@gmail.com");
             throw new IllegalArgumentException();
         }
         return email;
@@ -397,18 +423,44 @@ public class CrudController {
         dataPane.getChildren().add(commit);
     }
 
-    private void createCombobox(String name, ObservableList<String> values) {
-        Label l = new Label("Введите имя банка");
+    private void createCombobox(String title, String name, ObservableList<String> values, double y) {
+        Label l = new Label(title);
         l.setLayoutX(X_LAYOUT);
-        l.setLayoutY(520);
+        l.setLayoutY(y);
 
         ComboBox<String> comboBox = new ComboBox<>(values);
         comboBox.setPrefWidth(INPUT_WIDTH);
         comboBox.setPrefHeight(INPUT_HEIGHT);
         comboBox.setLayoutX(X_LAYOUT);
-        comboBox.setLayoutY(520 + SIZE_BETWEEN_LABEL_AND_INPUT);
+        comboBox.setLayoutY(y + SIZE_BETWEEN_LABEL_AND_INPUT);
         comboBoxMap.put(name, comboBox);
         dataPane.getChildren().addAll(comboBox, l);
+    }
+
+
+
+    private void delete(Object o) throws CannotDeleteException {
+        if (o.getClass() == Bank.class) {
+            Bank b = (Bank) o;
+            if (b.getOrganizations().size() == 0) {
+                bankRepository.delete(b);
+            } else {
+                throw new CannotDeleteException(b.getName());
+            }
+        } else if (o.getClass() == Organization.class) {
+            repositoryOrg.delete((Organization) o);
+        } else if (o.getClass() == Course.class) {
+            Course c = (Course) o;
+            if (c.getOrganizations().size() == 0) {
+                courseRepository.delete(c);
+            } else {
+                throw new CannotDeleteException(c.getName());
+            }
+        } else if (o.getClass() == Signature.class) {
+            signatureRepository.delete((Signature) o);
+        } else {
+            throw new RuntimeException("unknown entity");
+        }
     }
 
     private void defaultValues() { }

@@ -139,7 +139,7 @@ public class WritingController extends FormController {
                 letter.setTitle(title);
                 List<Box> letters = new ArrayList<>();
                 for (String receiver : receivers) {
-                    sender.send(title, context, receiver);
+                    sender.send(title, context, receiver.trim());
                     Box let = Box.builder()
                             .from(clientDetails.getEmail())
                             .to(receiver)

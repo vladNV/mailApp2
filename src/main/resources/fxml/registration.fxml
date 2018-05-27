@@ -66,5 +66,10 @@
       </Label>
       <Button fx:id="reg" layoutX="66.0" layoutY="527.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="134.0" text="Зарегистрироваться" textFill="#090d0d" />
       <Button layoutX="64.0" layoutY="579.0" mnemonicParsing="false" onAction="#backToLogin" prefHeight="25.0" prefWidth="134.0" text="Назад к логину" />
+      <Label layoutX="484.0" layoutY="268.0" textFill="#d71b1b">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
    </children>
 </AnchorPane>

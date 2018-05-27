@@ -30,6 +30,10 @@ public class Organization {
     Bank bank;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id", nullable = false)
+    Course course;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", nullable = false)
     Client client;
 

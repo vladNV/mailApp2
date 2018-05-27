@@ -14,6 +14,7 @@ import static sample.Main.SCENE_DEFAULT_WIDTH;
 
 public class RegistrationController {
     @FXML private Button reg;
+    @FXML private Button delete;
     @FXML private TextField name;
     @FXML private TextField email;
     @FXML private TextField login;
@@ -56,8 +57,17 @@ public class RegistrationController {
             errorName.setText("Неправильное имя!");
         }
 
-        if (login.getText() != null && !login.getText().isEmpty()) {
-            client.setLogin(login.getText());
+        String username = (login != null) ? login.getText() : "";
+
+        if (clientRepository.findByLogin(username) != null) {
+            JavaFxController.alert("Ошибка авторизации",
+                    "Такой пользователь уже существует",
+                    "Выберите, пожалуйста, другой логин");
+            client.setLogin(null);
+        }
+
+        if (username != null && !username.isEmpty()) {
+            client.setLogin(username);
         } else {
             errorLogin.setText("Неправильный логин!");
         }

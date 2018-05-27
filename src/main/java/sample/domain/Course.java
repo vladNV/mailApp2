@@ -6,6 +6,8 @@ import lombok.Setter;
 import lombok.ToString;
 
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -25,6 +27,9 @@ public class Course {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", nullable = false)
     Client client;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "course")
+    Set<Organization> organizations = new HashSet<>();
 
     @Override
     public String toString() {

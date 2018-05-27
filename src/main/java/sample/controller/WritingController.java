@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 public class WritingController extends FormController {
-    private static final String USERNAME = "zhigulevka.dolina@gmail.com ";
+    private static final String USERNAME = "zhigulevka.dolina@gmail.com";
     private static final String PASSWORD = "Ljkbyf123";
 
     @FXML private TextArea text;

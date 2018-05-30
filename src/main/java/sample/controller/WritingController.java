@@ -20,7 +20,7 @@ import java.util.*;
 public class WritingController extends FormController {
     private static final String USERNAME = "zhigulevka.dolina@gmail.com";
     private static final String PASSWORD = "Ljkbyf123";
-
+    @FXML private Button chooseAllOrg;
     @FXML private TextArea text;
     @FXML private TextField receiver;
     @FXML private Button chooseOrg;
@@ -83,13 +83,29 @@ public class WritingController extends FormController {
 
         write.setOnAction(event -> JavaFxController.changing(writing.getView()));
 
-
-
         changing.setOnAction(event -> {});
-        about.setOnAction(event -> JavaFxController.alert("Mail program 1.0v", "Автор: ", "Программа для рассылки писем"));
+        about.setOnAction(event -> JavaFxController.alert("Mail program 1.0v", "Автор: ",
+                "Программа для рассылки писем"));
+
         logout.setOnAction(event -> JavaFxController.changing(login.getView()));
 
         changing.setOnAction(event -> crudController().changeEmail());
+
+        chooseAllOrg.setOnAction(event -> {
+            List<Organization> organizations = repositoryOrg.findAll();
+            String emails = organizations.stream()
+                    .filter(Objects::nonNull)
+                    .map(Organization::getEmail).reduce((s1, s2) -> s1 += "," + s2)
+                    .orElse("");
+            if (!emails.isEmpty()) {
+                receiver.setText(emails);
+            } else {
+                JavaFxController.alert("Предупреждение", "Организаций нет ",
+                        "Вы не добавили не одной организации");
+            }
+
+        });
+
         /* Writing controller */
         chooseOrg.setOnAction(event -> {
             List<Organization> organizations = repositoryOrg.findAll();
@@ -109,7 +125,8 @@ public class WritingController extends FormController {
                 mailPattern.setEmails(receiver.getText());
                 mailPattern.setCreatedDate(LocalDateTime.now());
                 mailPatternRepository.save(mailPattern);
-                JavaFxController.alert("Сохранение","Сохранение шаблона", "Ваш шаблон был успешно сохранен!");
+                JavaFxController.alert("Сохранение","Сохранение шаблона",
+                        "Ваш шаблон был успешно сохранен!");
                 return;
             }
             JavaFxController.alert("Сохранение","Сохранение шаблона",
